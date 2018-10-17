@@ -3,7 +3,7 @@ defmodule Sweeper do
     IO.inspect event
 
     sort(events)
-    |> Enum.map(&intersect(event, &1))
+    |> Enum.map(&intersect?(event, &1))
     |> IO.inspect
   end
 
@@ -12,9 +12,20 @@ defmodule Sweeper do
     IO.inspect result
   end
 
-  defp intersect(e1, e2) do
-    (e1.start_date > e2.start_date && e1.start_date < e2.end_date) ||
-    (e1.start_date > e2.start_date && e1.start_date < e2.start_date) ||
-      (e1.end_date > e2.start_date && e1.end_date <= e2.end_date)
+  defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
+    when (s1 > s2 and s1 < e2) do
+    true
   end
+
+  defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
+    when (s1 > s2 and s1 < s2) do
+    true
+  end
+
+  defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
+    when (e1 > s2 and e1 <= e2) do
+    true
+  end
+
+  defp intersect?(_, _), do: false
 end
