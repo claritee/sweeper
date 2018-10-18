@@ -11,24 +11,32 @@ defmodule Sweeper do
   end
 
   # NOTE: Hack to insert the new event. In real use, insertion/deletion/update would occur at the time of finding intersecting events.
-  defp insert_new_event(result, event = %{start_date: _, end_date: _, type: t}) when t != :available do
-    Enum.uniq(List.insert_at(result, -1, event))
+  defp insert_new_event(result, event = %{start_date: start_date, end_date: _, type: type}) when type != :available do
+    intersecting_event = Enum.find(result, fn(%{start_date: s, end_date: e, type: t}) ->
+      type == t && start_date >= s && start_date <= e
+    end)
+    IO.inspect intersecting_event
+    if intersecting_event, do: Enum.uniq(result), else: Enum.uniq(List.insert_at(result, -1, event))
   end
+
   defp insert_new_event(result, _), do: result
 
+  # new event overlaps on same dates as existing event
   defp edit_event(event1 = %{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2})
        when (s1 == s2 and e1 == e2) do
-    case t1 == :available do
-      true -> nil # delete existing event e2
-      _ -> event1 # :unavailable or :part_time, save or edit existing record to update the type
+    if t1 == :available do
+      nil # delete existing event
+    else
+      event1 #change type of existing event
     end
   end
 
-  defp edit_event(%{start_date: s1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
+  # new event starts in another event
+  defp edit_event(%{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
     when (s1 > s2 and s1 < e2) do
     cond do
       t1 == t2 ->
-        %{start_date: s2, end_date: s1, type: t1}
+        %{start_date: s2, end_date: e1, type: t1}
       t1 == :available ->
         %{start_date: s2, end_date: s1, type: t2}
       t1 == :unavailable ->
@@ -40,25 +48,37 @@ defmodule Sweeper do
     end
   end
 
-  # TODO: what was this testing?
-#  defp edit_event(%{start_date: s1}, %{start_date: s2})
-#    when (s1 > s2 and s1 < s2) do
-#    true
-#  end
-
-  # new event starts within another event
-  defp edit_event(%{end_date: e1}, %{start_date: s2, end_date: e2})
-    when (e1 > s2 and e1 <= e2) do
-    true
+  # new event ends within another event of same type
+  defp edit_event(%{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
+       when (e1 > s2 and e1 <= e2) do
+    if t1 == t2 do
+      %{start_date: s1, end_date: e2, type: t2}
+    else
+      %{start_date: e1, end_date: e2, type: t2}
+    end
   end
 
+
   # New event is after existing event
-  defp edit_event(%{start_date: s1}, event = %{start_date: _, end_date: e2, type: _})
-    when s1 >= e2, do: event
+  defp edit_event(%{start_date: s1, end_date: e1, type: t1}, event = %{start_date: s2, end_date: e2, type: t2})
+    when s1 >= e2 do
+    if s1 == e2 && t1 == t2 do
+      %{start_date: s2, end_date: e1, type: t1}
+    else
+      event
+    end
+  end
 
   # New event is before existing event
-  defp edit_event(%{end_date: e1}, event = %{start_date: s1, end_date: _, type: _})
-    when e1 <= s1, do: event
+  defp edit_event(event1 = %{start_date: s1, end_date: e1, type: t1}, event2 = %{start_date: s2, end_date: e2, type: t2})
+    when e1 <= s2 do
+    cond do
+      e1 == s2 && t1 == t2 ->
+        %{start_date: s1, end_date: e2, type: t1}
+      true ->
+        event2
+      end
+  end
 
   defp edit_event(_, _), do: false
 end
