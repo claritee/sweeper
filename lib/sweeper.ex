@@ -47,7 +47,7 @@ defmodule Sweeper do
     end
   end
 
-  # new event end date is within another event of same type
+  # new event end date is within another event
   defp edit_event(%{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
        when (e1 > s2 and e1 <= e2) do
     if t1 == t2 do

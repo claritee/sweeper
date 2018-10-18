@@ -108,6 +108,17 @@ defmodule SweeperTest do
     end
   end
 
+  describe "available event overlaps with unavailable and part time events" do
+    test "available event start date is the same" do
+    end
+    test "available event end date is the same" do
+    end
+    test "available event start and end date between" do
+    end
+    test "available event start and end date between" do
+    end
+  end
+
   defp event(start_date, end_date, type) do
     %{start_date: start_date, end_date: end_date, type: type}
   end
