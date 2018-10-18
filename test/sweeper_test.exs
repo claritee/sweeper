@@ -93,6 +93,21 @@ defmodule SweeperTest do
     end
   end
 
+  describe "new event is inserted between existing events" do
+    test "event type start and end boundary, different event type" do
+      # event is inserted
+    end
+    test "event type start and end boundary, availability event type" do
+      # no event inserted
+    end
+    test "event type start and end boundary, same event type" do
+      # event not inserted, left event end date adjusted, right event removed
+    end
+    test "event type start and end overlap, availability event type" do
+      # event not inserted, left event end date adjusted, right event start date adjusted
+    end
+  end
+
   defp event(start_date, end_date, type) do
     %{start_date: start_date, end_date: end_date, type: type}
   end
