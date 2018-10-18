@@ -15,7 +15,6 @@ defmodule Sweeper do
     intersecting_event = Enum.find(result, fn(%{start_date: s, end_date: e, type: t}) ->
       type == t && start_date >= s && start_date <= e
     end)
-    IO.inspect intersecting_event
     if intersecting_event, do: Enum.uniq(result), else: Enum.uniq(List.insert_at(result, -1, event))
   end
 
@@ -31,30 +30,30 @@ defmodule Sweeper do
     end
   end
 
-  # new event starts in another event
+  # new event start date begins with in another event
   defp edit_event(%{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
     when (s1 > s2 and s1 < e2) do
     cond do
       t1 == t2 ->
-        %{start_date: s2, end_date: e1, type: t1}
+        %{start_date: s2, end_date: e1, type: t1} # insert and update existing
       t1 == :available ->
-        %{start_date: s2, end_date: s1, type: t2}
+        %{start_date: s2, end_date: s1, type: t2} # insert and update existing
       t1 == :unavailable ->
-        %{start_date: s2, end_date: s1, type: t2}
+        %{start_date: s2, end_date: s1, type: t2} # insert and update existing
       t1 == :part_time ->
-        %{start_date: s2, end_date: s1, type: t2}
+        %{start_date: s2, end_date: s1, type: t2} # insert and update existing
       true ->
         %{start_date: s2, end_date: e2, type: t2} # no change
     end
   end
 
-  # new event ends within another event of same type
+  # new event end date is within another event of same type
   defp edit_event(%{start_date: s1, end_date: e1, type: t1}, %{start_date: s2, end_date: e2, type: t2})
        when (e1 > s2 and e1 <= e2) do
     if t1 == t2 do
-      %{start_date: s1, end_date: e2, type: t2}
+      %{start_date: s1, end_date: e2, type: t2} # update existing (end date shifts)
     else
-      %{start_date: e1, end_date: e2, type: t2}
+      %{start_date: e1, end_date: e2, type: t2} # update existing (start date shifts)
     end
   end
 
