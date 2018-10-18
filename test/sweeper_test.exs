@@ -7,11 +7,20 @@ defmodule SweeperTest do
 #    assert {:ok, event(15, 17, :unavailable)} == result
 #  end
 
-#  test "new event does not overlap existing event" do
-#    assert Sweeper.find_match(event(10, 15, :unavailable), [event(1, 7, :unavailable)]) == [false]
-#    assert Sweeper.find_match(event(10, 15, :unavailable), [event(3, 10, :unavailable)]) == [false]
-#    assert Sweeper.find_match(event(10, 15, :unavailable), [event(15, 18, :unavailable)]) == [false]
-#  end
+  describe "new event does not overlap existing event" do
+    test "new event is after existing event" do
+      assert Sweeper.find_match(event(10, 15, :unavailable), [event(1, 7, :unavailable)]) == [event(1, 7, :unavailable), event(10, 15, :unavailable)]
+    end
+    test "new event is after: starts on the end date of existing event" do
+      assert Sweeper.find_match(event(10, 15, :unavailable), [event(3, 10, :unavailable)]) == [event(3, 10, :unavailable), event(10, 15, :unavailable)]
+    end
+    test "new event is before: ends on the start date of existing event" do
+      assert Sweeper.find_match(event(10, 15, :unavailable), [event(15, 18, :unavailable)]) == [event(10, 15, :unavailable), event(15, 18, :unavailable)]
+    end
+    test "new event is before the start date of existing event" do
+      assert Sweeper.find_match(event(10, 15, :unavailable), [event(16, 18, :unavailable)]) == [event(10, 15, :unavailable), event(16, 18, :unavailable)]
+    end
+  end
 
   describe "new event overlaps existing event" do
     test "new event start date overlaps existing event of same type" do
