@@ -93,18 +93,27 @@ defmodule SweeperTest do
     end
   end
 
+  #TODO insert different types?
   describe "new event is inserted between existing events" do
-    test "event type start and end boundary, different event type" do
-      # event is inserted
+    test "event start and end boundary, different event type, event inserted" do
+      result = Sweeper.find_match(event(10, 15, :part_time), [event(8, 10, :unavailable), event(15, 16, :unavailable)])
+      assert result == [event(8, 10, :unavailable), event(10, 15, :part_time), event(15, 16, :unavailable)]
+
+      result = Sweeper.find_match(event(10, 15, :unavailable), [event(8, 10, :unavailable), event(15, 16, :part_time)])
+      assert result == [event(8, 15, :unavailable), event(15, 16, :part_time)]
     end
-    test "event type start and end boundary, availability event type" do
-      # no event inserted
+    test "event start and end boundary, availability event type, event not inserted" do
+      result = Sweeper.find_match(event(10, 15, :available), [event(8, 10, :unavailable), event(15, 16, :part_time)])
+      assert result == [event(8, 10, :unavailable), event(15, 16, :part_time)]
     end
-    test "event type start and end boundary, same event type" do
-      # event not inserted, left event end date adjusted, right event removed
+    # TODO fix
+    test "event start and end boundary, same event type. Left event updated and right event removed" do
+      result = Sweeper.find_match(event(10, 15, :part_time), [event(8, 10, :part_time), event(15, 16, :part_time)])
+      assert result == [event(8, 16, :part_time)]
     end
-    test "event type start and end overlap, availability event type" do
-      # event not inserted, left event end date adjusted, right event start date adjusted
+    test "event start and end overlap, availability event type. Both left and events updated" do
+      result = Sweeper.find_match(event(9, 16, :available), [event(8, 10, :part_time), event(15, 17, :unavailable)])
+      assert result == [event(8, 9, :part_time), event(16, 17, :unavailable)]
     end
   end
 
