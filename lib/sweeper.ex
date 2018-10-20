@@ -2,6 +2,7 @@ defmodule Sweeper do
   def find_match(event, events) do
     Enum.map(sort(events), &edit_event(event, &1))
     |> insert_new_event(event)
+    |> List.flatten
     |> Enum.reject(&is_nil/1)
     |> sort
   end
@@ -27,6 +28,19 @@ defmodule Sweeper do
       nil # delete existing event
     else
       event1 #change type of existing event
+    end
+  end
+
+  # new event starts and ends within another event
+  defp edit_event(event1 = %{start_date: s1, end_date: e1, type: t1}, event2 = %{start_date: s2, end_date: e2, type: t2})
+    when s1 > s2 and e1 < e2 do
+    cond do
+      t1 == t2 ->
+        event2
+      t1 == :available ->
+        [%{start_date: s2, end_date: s1, type: t2}, %{start_date: e1, end_date: e2, type: t2}]
+      true ->
+        event1
     end
   end
 
