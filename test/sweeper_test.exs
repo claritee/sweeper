@@ -109,13 +109,15 @@ defmodule SweeperTest do
   end
 
   describe "available event overlaps with unavailable and part time events" do
-    test "available event start date is the same" do
+    test "start date is the same" do
     end
-    test "available event end date is the same" do
+    test "end date is the same" do
     end
-    test "available event start and end date between" do
+    test "in the middle of events" do
     end
-    test "available event start and end date between" do
+    test "overlaps both events on same dates removes both events" do
+      result = Sweeper.find_match(event(10, 15, :available), [event(10, 15, :unavailable), event(10, 15, :part_time)])
+      assert result == []
     end
   end
 

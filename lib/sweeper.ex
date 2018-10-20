@@ -69,7 +69,7 @@ defmodule Sweeper do
   end
 
   # New event is before existing event
-  defp edit_event(event1 = %{start_date: s1, end_date: e1, type: t1}, event2 = %{start_date: s2, end_date: e2, type: t2})
+  defp edit_event(%{start_date: s1, end_date: e1, type: t1}, event2 = %{start_date: s2, end_date: e2, type: t2})
     when e1 <= s2 do
     cond do
       e1 == s2 && t1 == t2 ->
