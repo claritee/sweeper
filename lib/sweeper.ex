@@ -12,20 +12,13 @@ defmodule Sweeper do
     IO.inspect result
   end
 
+  # start within an event
   defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
-    when (s1 > s2 and s1 < e2) do
-    true
-  end
+    when (s1 >= s2 and s1 < e2), do: true
 
+  # end within an event
   defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
-    when (s1 > s2 and s1 < s2) do
-    true
-  end
-
-  defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2})
-    when (e1 > s2 and e1 <= e2) do
-    true
-  end
+       when (e1 > s2 and e1 <= e2), do: true
 
   defp intersect?(_, _), do: false
 end
