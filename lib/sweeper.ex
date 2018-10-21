@@ -19,7 +19,7 @@ defmodule Sweeper do
 
   # Logic to be used in SQL
 #  defp intersect?(%{start_date: s1, end_date: e1}, %{start_date: s2, end_date: e2}) do
-#    (s1 >= s2 && e1 <= e2) || (s1 == s2 && e1 == e2) || (e1 >= s2)
+#    (s1 >= s2 and s1 < e2) || (e1 > s2 and e1 <= e2)
 #  end
 
   # new event overlaps on same dates as existing event
@@ -64,7 +64,7 @@ defmodule Sweeper do
     end
   end
 
-  # New event starts before existing event and after existing event
+  # New event starts before existing event and ends after existing event
   defp edit_event(%{start_date: s1, end_date: e1, type: t1}, event = %{start_date: s2, end_date: e2, type: t2})
      when s1 <= s2 and e1 >= e2, do: nil
 
