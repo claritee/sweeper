@@ -1,17 +1,18 @@
 defmodule SweeperTest do
   use ExUnit.Case
   doctest Sweeper
+
   describe "new event does not overlap existing event" do
     test "new event is after existing event" do
       assert Sweeper.find_match(event(10, 15, :unavailable), [event(1, 7, :unavailable)]) == [event(1, 7, :unavailable), event(10, 15, :unavailable)]
     end
     test "new event is after: starts on the end date of existing event" do
-      result = [event(3, 15, :unavailable)]
+      result = [event(3, 10, :unavailable), event(10, 15, :unavailable)]
       assert Sweeper.find_match(event(10, 15, :unavailable), [event(3, 10, :unavailable)]) == result
     end
     # TODO fix
     test "new event is before: ends on the start date of existing event" do
-      assert Sweeper.find_match(event(10, 15, :unavailable), [event(15, 18, :unavailable)]) == [event(10, 18, :unavailable)]
+      assert Sweeper.find_match(event(10, 15, :unavailable), [event(15, 18, :unavailable)]) == [event(10, 15, :unavailable), event(15, 18, :unavailable)]
     end
     test "new event is before the start date of existing event" do
       assert Sweeper.find_match(event(10, 15, :unavailable), [event(16, 18, :unavailable)]) == [event(10, 15, :unavailable), event(16, 18, :unavailable)]
@@ -21,7 +22,7 @@ defmodule SweeperTest do
   describe "new event start date overlaps existing event" do
     test "events are of same type" do
       result = Sweeper.find_match(event(10, 15, :unavailable), [event(8, 11, :unavailable)])
-      assert result == [event(8, 15, :unavailable)]
+      assert result == [event(8, 10, :unavailable), event(10, 15, :unavailable)]
     end
 
     test "available overlaps existing unavailable event" do
@@ -73,7 +74,11 @@ defmodule SweeperTest do
     end
     test "begins in same type of event" do
       result = Sweeper.find_match(event(10, 15, :part_time), [event(12, 17, :part_time)])
-      assert [event(10, 17, :part_time)] == result
+      assert [event(10, 15, :part_time), event(15, 17, :part_time)] == result
+    end
+    test "begins in different type of event" do
+      result = Sweeper.find_match(event(10, 15, :part_time), [event(12, 17, :unavailable)])
+      assert [event(10, 15, :part_time), event(15, 17, :unavailable)] == result
     end
   end
 
@@ -100,39 +105,49 @@ defmodule SweeperTest do
       assert result == [event(8, 10, :unavailable), event(10, 15, :part_time), event(15, 16, :unavailable)]
 
       result = Sweeper.find_match(event(10, 15, :unavailable), [event(8, 10, :unavailable), event(15, 16, :part_time)])
-      assert result == [event(8, 15, :unavailable), event(15, 16, :part_time)]
+      assert result == [event(8, 10, :unavailable), event(10, 15, :unavailable), event(15, 16, :part_time)]
     end
     test "event start and end boundary, availability event type, event not inserted" do
       result = Sweeper.find_match(event(10, 15, :available), [event(8, 10, :unavailable), event(15, 16, :part_time)])
       assert result == [event(8, 10, :unavailable), event(15, 16, :part_time)]
     end
-    # TODO fix
     test "event start and end boundary, same event type. Left event updated and right event removed" do
       result = Sweeper.find_match(event(10, 15, :part_time), [event(8, 10, :part_time), event(15, 16, :part_time)])
-      assert result == [event(8, 16, :part_time)]
+      assert result == [event(8, 10, :part_time), event(10, 15, :part_time), event(15, 16, :part_time)]
     end
     test "event start and end overlap, availability event type. Both left and events updated" do
       result = Sweeper.find_match(event(9, 16, :available), [event(8, 10, :part_time), event(15, 17, :unavailable)])
       assert result == [event(8, 9, :part_time), event(16, 17, :unavailable)]
     end
+    test "event start in middle of another event, ends after right event" do
+      result = Sweeper.find_match(event(9, 18, :available), [event(8, 17, :part_time), event(17, 19, :unavailable)])
+      assert result == [event(8, 9, :part_time), event(18, 19, :unavailable)]
+    end
+    test "event start in middle of another event, ends after more than one event" do
+      result = Sweeper.find_match(event(9, 21, :available), [event(8, 17, :part_time), event(17, 19, :unavailable), event(20, 21, :unavailable)])
+      assert result == [event(8, 9, :part_time)]
+
+      result = Sweeper.find_match(event(9, 21, :available), [event(9, 17, :part_time), event(17, 21, :unavailable)])
+      assert result == []
+    end
   end
 
   describe "available event overlaps with unavailable and part time events" do
     test "start date is the same" do
-      result = Sweeper.find_match(event(10, 15, :available), [event(10, 16, :unavailable), event(10, 16, :part_time)])
-      assert result == [event(15, 16, :unavailable), event(15, 16, :part_time)]
+      result = Sweeper.find_match(event(10, 15, :available), [event(10, 16, :unavailable), event(16, 17, :part_time)])
+      assert result == [event(15, 16, :unavailable), event(16, 17, :part_time)]
     end
     test "end date is the same" do
-      result = Sweeper.find_match(event(10, 15, :available), [event(9, 15, :unavailable), event(9, 15, :part_time)])
-      assert result == [event(9, 10, :unavailable), event(9, 10, :part_time)]
+      result = Sweeper.find_match(event(10, 15, :available), [event(9, 15, :unavailable), event(15, 16, :part_time)])
+      assert result == [event(9, 10, :unavailable), event(15, 16, :part_time)]
     end
     test "in the middle of events" do
-      result = Sweeper.find_match(event(10, 15, :available), [event(9, 16, :unavailable), event(9, 16, :part_time)])
-      assert result == [event(9, 10, :unavailable), event(9, 10, :part_time), event(15, 16, :unavailable), event(15, 16, :part_time)]
+      result = Sweeper.find_match(event(10, 15, :available), [event(8, 9, :part_time), event(9, 16, :unavailable), event(16, 17, :part_time)])
+      assert result == [event(8, 9, :part_time), event(9, 10, :unavailable), event(15, 16, :unavailable), event(16, 17, :part_time)]
     end
-    test "overlaps both events on same dates removes both events" do
-      result = Sweeper.find_match(event(10, 15, :available), [event(10, 15, :unavailable), event(10, 15, :part_time)])
-      assert result == []
+    test "overlaps both events on same dates" do
+      result = Sweeper.find_match(event(10, 15, :available), [event(7, 10, :unavailable), event(10, 15, :unavailable), event(15, 17, :unavailable)])
+      assert result == [event(7, 10, :unavailable), event(15, 17, :unavailable)]
     end
   end
 
